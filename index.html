@@ -1729,7 +1729,7 @@
     <section id="home" class="hero">
         <!-- Vídeo de fundo -->
         <video autoplay muted loop playsinline class="hero-video">
-            <source src="grok-video-d868d1dc-d717-433c-a0b5-43b26c164368.mp4" type="video/mp4">
+            <source src="seu-video.mp4" type="video/mp4">
             <!-- Adicione fallbacks para diferentes formatos se necessário -->
             <!-- <source src="seu-video.webm" type="video/webm"> -->
             Seu navegador não suporta o elemento de vídeo.
@@ -1949,7 +1949,9 @@
                 image: "Camisapuma.png",
                 tag: "EM BREVE",
                 description: "Linha especial inspirada no lifestyle surf, com tecidos tecnológicos e designs modernos.",
-                badge: "Nova Coleção"
+                badge: "Nova Coleção",
+                // Data de lançamento: 15 dias a partir de hoje
+                launchDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
             },
             {
                 id: 102,
@@ -1958,7 +1960,9 @@
                 image: "canguru.png",
                 tag: "EM BREVE", 
                 description: "Conforto e estilo em moletons de alta qualidade para o inverno 2025.",
-                badge: "Edição Limitada"
+                badge: "Edição Limitada",
+                // Data de lançamento: 8 dias a partir de hoje
+                launchDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000)
             },
             {
                 id: 103,
@@ -1967,7 +1971,9 @@
                 image: "bermu.png",
                 tag: "EM BREVE",
                 description: "Bermudas masculinas com cortes modernos e tecidos de última geração.",
-                badge: "Pré-venda"
+                badge: "Pré-venda",
+                // Data de lançamento: 22 dias a partir de hoje
+                launchDate: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000)
             }    
         ];
 
@@ -1999,6 +2005,7 @@
         let selectedProduct = null;
         let selectedSize = null;
         let currentModalImageIndex = 0;
+        let countdownIntervals = [];
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
@@ -2077,10 +2084,13 @@
         // Renderizar produtos em destaque na seção de novidades - TOTALMENTE REFEITO
         function renderNovidades() {
             novidadesGrid.innerHTML = '';
-            novidades.forEach(novidade => {
-                const novidadeCard = createNovidadeCard(novidade);
+            novidades.forEach((novidade, index) => {
+                const novidadeCard = createNovidadeCard(novidade, index);
                 novidadesGrid.appendChild(novidadeCard);
             });
+            
+            // Iniciar contadores
+            startCountdowns();
         }
 
         // Criar card de produto com galeria de imagens
@@ -2248,9 +2258,22 @@
         }
 
         // Criar card de novidade - TOTALMENTE REFEITO
-        function createNovidadeCard(novidade) {
+        function createNovidadeCard(novidade, index) {
             const card = document.createElement('div');
             card.className = 'novidade-card';
+            
+            // Calcular tempo restante
+            const now = new Date();
+            const timeRemaining = novidade.launchDate - now;
+            
+            let days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Garantir que os valores não sejam negativos
+            days = Math.max(0, days);
+            hours = Math.max(0, hours);
+            minutes = Math.max(0, minutes);
             
             card.innerHTML = `
                 <div class="novidade-tag">${novidade.tag}</div>
@@ -2262,17 +2285,17 @@
                     <p class="novidade-description">${novidade.description}</p>
                     <div class="novidade-badge">${novidade.badge}</div>
                     <div class="novidade-price">EM BREVE</div>
-                    <div class="countdown-timer">
+                    <div class="countdown-timer" id="countdown-${index}">
                         <div class="countdown-item">
-                            <span class="countdown-value">15</span>
+                            <span class="countdown-value" id="days-${index}">${days}</span>
                             <span class="countdown-label">dias</span>
                         </div>
                         <div class="countdown-item">
-                            <span class="countdown-value">08</span>
+                            <span class="countdown-value" id="hours-${index}">${hours}</span>
                             <span class="countdown-label">horas</span>
                         </div>
                         <div class="countdown-item">
-                            <span class="countdown-value">45</span>
+                            <span class="countdown-value" id="minutes-${index}">${minutes}</span>
                             <span class="countdown-label">min</span>
                         </div>
                     </div>
@@ -2284,6 +2307,44 @@
                 </div>
             `;
             return card;
+        }
+
+        // Iniciar contadores para todos os produtos em novidades
+        function startCountdowns() {
+            // Limpar intervalos anteriores
+            countdownIntervals.forEach(interval => clearInterval(interval));
+            countdownIntervals = [];
+            
+            novidades.forEach((novidade, index) => {
+                const interval = setInterval(() => {
+                    updateCountdown(novidade, index);
+                }, 1000);
+                
+                countdownIntervals.push(interval);
+            });
+        }
+
+        // Atualizar contador individual
+        function updateCountdown(novidade, index) {
+            const now = new Date();
+            const timeRemaining = novidade.launchDate - now;
+            
+            if (timeRemaining <= 0) {
+                // Lançamento ocorreu
+                document.getElementById(`days-${index}`).textContent = '0';
+                document.getElementById(`hours-${index}`).textContent = '0';
+                document.getElementById(`minutes-${index}`).textContent = '0';
+                return;
+            }
+            
+            let days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Atualizar elementos DOM
+            document.getElementById(`days-${index}`).textContent = days;
+            document.getElementById(`hours-${index}`).textContent = hours;
+            document.getElementById(`minutes-${index}`).textContent = minutes;
         }
 
         // Configurar event listeners
